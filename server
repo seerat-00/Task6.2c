@@ -1,0 +1,30 @@
+import socket
+
+dns_records = {
+    "example.com": {"A": "192.168.1.1"},
+    "alias.com": {"CNAME": "example.com"},
+}
+
+HOST = "127.0.0.1"
+PORT = 5353
+
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server_socket.bind((HOST, PORT))
+
+print(f"DNS Server running on {HOST}:{PORT}")
+
+while True:
+    data, addr = server_socket.recvfrom(1024)
+    query = data.decode().strip()
+    
+    print(f"Received query: {query} from {addr}")
+    
+    response = "Hostname not found"
+    if query in dns_records:
+        if "A" in dns_records[query]:
+            response = f"A {dns_records[query]['A']}"
+        elif "CNAME" in dns_records[query]:
+            cname_target = dns_records[query]['CNAME']
+            response = f"CNAME {cname_target} -> A {dns_records[cname_target]['A']}"
+
+    server_socket.sendto(response.encode(), addr)
